@@ -1,5 +1,52 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 {% block content %}
-TODO
+<form method="post" style="text-align: center;" action="{% url 'advanced_analysis' %}">
+    {% csrf_token %}
+    <div class="wrapper">
+      <div class="t11">
+          <select name="country" id="country" class="select">
+          {% for country in countries %}
+            <option value="{{ country }}" {% if selected_country == country %} selected {%endif%}>{{ country }}</option>
+        {% endfor %}
+              </select>
+          Country
+      </div>
+
+        <div class="t12">
+           <select name="time" id="time" class="select">
+          {% for time in times %}
+            <option value="{{ time }}" {% if selected_time == time %} selected {%endif%}>{{ time }}</option>
+        {% endfor %}
+              </select>
+            Time range
+      </div>
+
+       <div class="t16">
+          <input class="button" type="submit" value="Submit"/>
+      </div>
+
+     <div class="t21">
+      <img class="covid-plot" src="/static/images/covid5.png"/>
+     </div>
+
+     <div class="t22">
+      <img class="covid-plot" src="/static/images/covid6.png"/>
+     </div>
+
+     <div class="t23">
+       <img class="covid-plot" src="/static/images/covid7.png"/>
+     </div>
+
+     <div class="t31">
+      <img class="covid-plot" src="/static/images/covid8.png"/>
+     </div>
+
+        <div class="t32">
+      <img class="covid-plot"  src="/static/images/covid9.png"/>
+     </div>
+	 
+
+    </div>
+</form>
 {% endblock %}

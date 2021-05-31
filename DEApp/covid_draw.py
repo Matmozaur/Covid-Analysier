@@ -1,3 +1,4 @@
+import pickle
 from datetime import timedelta, datetime
 from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
@@ -5,7 +6,20 @@ from dateutil.relativedelta import relativedelta
 
 from DEApp.currency_code import get_currencies
 from DEApp.data_loader import COVID_DATA, GROUPS, CURRENCY_CODES
+from DEApp.lstm_utils import prepare_lstm_pred_new_cases, prepare_lstm_pred_new_deaths
 from DEApp.shares_code import get_stock_data
+
+LSTM_NEW_CASES_TEST_MAE = 1794.41
+LSTM_NEW_DEATHS_TEST_MAE = 95.53
+
+dict_with_measures_to_advanced_analysis = \
+    {1: ["new_vaccinations", "new_cases", "New vaccinations vs new cases"],
+     2: ["new_deaths", "new_cases", "New deaths vs new cases"],
+     3: ["new_tests", "new_cases", "New tests vs new cases"],
+     4: ["new_vaccinations", "new_deaths", "New vaccinations vs new deaths"],
+     5: ["people_fully_vaccinated_per_hundred", "new_cases_per_million", "Fully vaccinated vs new cases"]
+     # 6: []
+     }
 
 
 def prepare_covid_data(time):
@@ -101,7 +115,7 @@ def get_rank(measure):
     ax.bar(ranking[:5].index, ranking[:5][measure].values)
     plt.xticks(rotation=30, )
     plt.title("Top 5 " + measure, fontdict={'fontsize': 40, 'color': "white"})
-    plt.legend()
+    # plt.legend()
     ax.set_ylabel(measure)
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -179,4 +193,112 @@ def draw_covid_currency(country1, country2, measure, time):
     ax.yaxis.label.set_fontsize(30)
     ax.tick_params(colors='white')
     fig.savefig('static/images/covid4.png', dpi=300, bbox_inches='tight', transparent=True)
+    fig.clf()
+
+
+def prepare_measures(df, one_column, second_column, scale_nominator=1.0, scale_denominator=1.0):
+    """
+        Calculate new column one_column_vs_second_column.
+        :param df: df with data
+        :param one_column: name of first column (nominator)
+        :param second_column: name of second column (denominator)
+        """
+    new_column_name = one_column + "_vs_" + second_column
+    df[new_column_name] = (df[one_column]*scale_nominator)/(df[second_column]*scale_denominator)
+    return df, new_column_name
+
+
+def plot_one_measures_in_advanced_analysis(data_to_plot, time_prior, title, country, path_to_save):
+    plt.rcParams.update({'font.size': 20})
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.set_xlim([time_prior, datetime.now()])
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(data_to_plot, 'r.-', markersize=25, linewidth=3)
+    ax.grid()
+    plt.xticks(rotation=30, )
+    plt.title(title + " in " + country, fontdict={'fontsize': 40, 'color': "white"})
+    # plt.legend()
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_fontsize(30)
+    ax.yaxis.label.set_fontsize(30)
+    ax.tick_params(colors='white')
+    fig.savefig(path_to_save, dpi=300, bbox_inches='tight', transparent=True)
+    fig.clf()
+
+
+def draw_measures_advanced_analysis(country, time):
+    """
+        Prepare basic plot.
+        :param country: str country name
+        :param time: str time range for plot
+        """
+    data, time_prior = prepare_covid_data(time)
+    data = data[data['location'] == country]\
+
+    data, column_name1 = prepare_measures(data, dict_with_measures_to_advanced_analysis[1][0], dict_with_measures_to_advanced_analysis[1][1])
+    data, column_name2 = prepare_measures(data, dict_with_measures_to_advanced_analysis[2][0], dict_with_measures_to_advanced_analysis[2][1])
+    data, column_name3 = prepare_measures(data, dict_with_measures_to_advanced_analysis[3][0],
+                                          dict_with_measures_to_advanced_analysis[3][1])
+    data, column_name4 = prepare_measures(data, dict_with_measures_to_advanced_analysis[4][0],
+                                          dict_with_measures_to_advanced_analysis[4][1])
+    data, column_name5 = prepare_measures(data, dict_with_measures_to_advanced_analysis[5][0],
+                                          dict_with_measures_to_advanced_analysis[5][1], scale_nominator=10000)
+
+    plot_one_measures_in_advanced_analysis(data[column_name1], time_prior,
+                                           dict_with_measures_to_advanced_analysis[1][2], country, 'static/images/covid5.png')
+    plot_one_measures_in_advanced_analysis(data[column_name2], time_prior,
+                                           dict_with_measures_to_advanced_analysis[2][2], country,
+                                           'static/images/covid6.png')
+    plot_one_measures_in_advanced_analysis(data[column_name3], time_prior,
+                                           dict_with_measures_to_advanced_analysis[3][2], country,
+                                           'static/images/covid7.png')
+    plot_one_measures_in_advanced_analysis(data[column_name4], time_prior,
+                                           dict_with_measures_to_advanced_analysis[4][2], country,
+                                           'static/images/covid8.png')
+
+    plot_one_measures_in_advanced_analysis(data[column_name4], time_prior,
+                                           dict_with_measures_to_advanced_analysis[5][2], country,
+                                           'static/images/covid9.png')
+
+
+def draw_predictions_lstm_new_cases():
+    new_cases_pl, pred = prepare_lstm_pred_new_cases()
+    plt.rcParams.update({'font.size': 20})
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(new_cases_pl, 'b.-', markersize=25, linewidth=3, label='historical new cases')
+    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new cases')
+    ax.grid()
+    plt.xticks(rotation=30, )
+    plt.title("LSTM prediction for new cases in Poland",
+              fontdict={'fontsize': 40, 'color': "white"})
+    plt.legend()
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_fontsize(30)
+    ax.yaxis.label.set_fontsize(30)
+    ax.tick_params(colors='white')
+    fig.savefig('static/images/pred1.png', dpi=300, bbox_inches='tight', transparent=True)
+    fig.clf()
+
+
+def draw_predictions_lstm_new_deaths():
+    new_cases_pl, pred = prepare_lstm_pred_new_deaths()
+    plt.rcParams.update({'font.size': 20})
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(new_cases_pl, 'b.-', markersize=25, linewidth=3, label='historical new deaths')
+    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new deaths')
+    ax.grid()
+    plt.xticks(rotation=30, )
+    plt.title("LSTM prediction for new deaths in Poland",
+              fontdict={'fontsize': 40, 'color': "white"})
+    plt.legend()
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_fontsize(30)
+    ax.yaxis.label.set_fontsize(30)
+    ax.tick_params(colors='white')
+    fig.savefig('static/images/pred2.png', dpi=300, bbox_inches='tight', transparent=True)
     fig.clf()

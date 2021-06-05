@@ -3,7 +3,7 @@ from django.shortcuts import render
 from DEApp.data_loader import COLUMNS_COVID_USABLE, TIMES_COVID, COUNTRIES, SHARES_NAMES
 from DEApp.covid_draw import draw_covid1, draw_covid2, get_rank, draw_covid_currency, draw_covid_shares, \
     draw_measures_advanced_analysis, draw_predictions_lstm_new_deaths, \
-    draw_predictions_lstm_new_cases
+    draw_predictions_lstm_new_cases, draw_xgboost_new_cases, draw_xgboost_new_deaths
 
 context = dict()
 
@@ -50,6 +50,8 @@ def covid_plot(request):
 def predictions(request):
     draw_predictions_lstm_new_deaths()
     draw_predictions_lstm_new_cases()
+    draw_xgboost_new_cases()
+    draw_xgboost_new_deaths()
     return render(request, 'DEApp/Predictions.html', context)
 
 

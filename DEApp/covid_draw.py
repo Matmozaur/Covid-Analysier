@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from DEApp.currency_code import get_currencies
 from DEApp.data_loader import COVID_DATA, GROUPS, CURRENCY_CODES
 from DEApp.lstm_utils import prepare_lstm_pred_new_cases, prepare_lstm_pred_new_deaths
+from DEApp.moving_average import new_cases_xgboost, new_deaths_xgboost
 from DEApp.shares_code import get_stock_data
 
 LSTM_NEW_CASES_TEST_MAE = 1794.41
@@ -271,8 +272,8 @@ def draw_predictions_lstm_new_cases():
     ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new cases')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title("LSTM prediction for new cases in Poland",
-              fontdict={'fontsize': 40, 'color': "white"})
+    plt.title("Prediction new cases with LSTM; mean error on train: 10%, mean error on test: 31%",
+              fontdict={'fontsize': 20, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -292,8 +293,8 @@ def draw_predictions_lstm_new_deaths():
     ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new deaths')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title("LSTM prediction for new deaths in Poland",
-              fontdict={'fontsize': 40, 'color': "white"})
+    plt.title("Prediction new deaths with LSTM; mean error on train: 45%, mean error on test: 75%",
+              fontdict={'fontsize': 20, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -301,4 +302,78 @@ def draw_predictions_lstm_new_deaths():
     ax.yaxis.label.set_fontsize(30)
     ax.tick_params(colors='white')
     fig.savefig('static/images/pred2.png', dpi=300, bbox_inches='tight', transparent=True)
+    fig.clf()
+
+
+def new_cases_ewm(alpha=0.5, no_of_days=15):
+    today = datetime.now()
+    time_prior = today - timedelta(days=no_of_days)
+    new_cases_pl = COVID_DATA[COVID_DATA['location'] == 'Poland']
+    new_cases_pl = new_cases_pl[new_cases_pl.index >= time_prior]
+    new_cases_pl['ewm'] = new_cases_pl['new_cases'].ewm(alpha=alpha, adjust=False).mean()
+    return new_cases_pl
+
+
+def new_deaths_ewm(alpha=0.5, no_of_days=15):
+    today = datetime.now()
+    time_prior = today - timedelta(days=no_of_days)
+    new_deaths_pl = COVID_DATA[COVID_DATA['location'] == 'Poland']
+    new_deaths_pl = new_deaths_pl[new_deaths_pl.index >= time_prior]
+    new_deaths_pl['ewm'] = new_deaths_pl['new_deaths'].ewm(alpha=alpha, adjust=False).mean()
+    return new_deaths_pl
+
+
+def draw_xgboost_new_cases():
+    new_cases_pl = new_cases_ewm(alpha=0.3, no_of_days=30)
+    pred_df, error_train, error_test = new_cases_xgboost()
+    title_on_xgboost_pred = ""
+    title_on_xgboost_pred += "Prediction new cases with xgboost; mean error on train "
+    title_on_xgboost_pred += str(round(error_train, 2))
+    title_on_xgboost_pred += "%, mean error on test "
+    title_on_xgboost_pred += str(round(error_test, 2))
+    title_on_xgboost_pred += "%"
+    plt.rcParams.update({'font.size': 20})
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(new_cases_pl["ewm"], 'g.-', markersize=25, linewidth=3, label='Exponential moving averages (with alpha=0.3)')
+    ax.plot(new_cases_pl["new_cases"], 'r.-', markersize=25, linewidth=3, label='New cases')
+    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Predition (xgboost model)')
+    ax.grid()
+    plt.xticks(rotation=30, )
+    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 20, 'color': "white"})
+    plt.legend()
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_fontsize(30)
+    ax.yaxis.label.set_fontsize(30)
+    ax.tick_params(colors='white')
+    fig.savefig('static/images/pred3.png', dpi=300, bbox_inches='tight', transparent=True)
+    fig.clf()
+
+
+def draw_xgboost_new_deaths():
+    new_cases_pl = new_deaths_ewm(alpha=0.3, no_of_days=30)
+    pred_df, error_train, error_test = new_deaths_xgboost()
+    title_on_xgboost_pred = ""
+    title_on_xgboost_pred += "Prediction new deaths with xgboost; mean error on train "
+    title_on_xgboost_pred += str(round(error_train, 2))
+    title_on_xgboost_pred += "%, mean error on test "
+    title_on_xgboost_pred += str(round(error_test, 2))
+    title_on_xgboost_pred += "%"
+    plt.rcParams.update({'font.size': 20})
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(new_cases_pl["ewm"], 'g.-', markersize=25, linewidth=3, label='Exponential moving averages (with alpha=0.3)')
+    ax.plot(new_cases_pl["new_deaths"], 'r.-', markersize=25, linewidth=3, label='New deaths')
+    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Predition (xgboost model)')
+    ax.grid()
+    plt.xticks(rotation=30, )
+    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 20, 'color': "white"})
+    plt.legend()
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.xaxis.label.set_fontsize(30)
+    ax.yaxis.label.set_fontsize(30)
+    ax.tick_params(colors='white')
+    fig.savefig('static/images/pred4.png', dpi=300, bbox_inches='tight', transparent=True)
     fig.clf()

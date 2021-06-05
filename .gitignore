@@ -2,4 +2,5 @@
 .idea/
 venv/
 *.csv
-/static/images/covid*
+/static/images
+!/static/images/background.png

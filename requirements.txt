@@ -9,3 +9,5 @@ numpy~=1.19.5
 tensorflow~=2.5.0
 scikit-learn~=0.24.2
 xgboost~=1.4.2
+openpyxl==3.0.7
+yfinance==0.1.59

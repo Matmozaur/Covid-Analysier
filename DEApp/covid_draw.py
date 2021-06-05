@@ -54,9 +54,9 @@ def draw_covid1(country, measure, time):
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.set_xlim([time_prior, datetime.now()])
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    ax.plot(data[measure], 'r.-', markersize=25, linewidth=3, label=measure + ' in ' + country)
     ax.plot(data[measure].rolling(window='3d').mean(), 'y-', linewidth=8, label='running average (3 days)')
     ax.plot(data[measure].rolling(window='7d').mean(), 'g-', linewidth=8, label='running average (week)')
-    ax.plot(data[measure], 'r.-', markersize=25, linewidth=3)
     ax.grid()
     plt.xticks(rotation=30,)
     plt.title(measure + " in " + country, fontdict={'fontsize': 40, 'color': "white"})
@@ -144,13 +144,15 @@ def draw_covid_shares(long_name, measure, time):
     ax.yaxis.label.set_fontsize(30)
     ax.tick_params(colors='white')
     ax2 = ax.twinx()
-    ax2.plot(data[measure], 'g-', label=measure + ' in the whole world', linewidth=3)
-    ax.plot(data_share["Close"], 'r.-', markersize=25, label=long_name, linewidth=8)
+    lns2 = ax2.plot(data[measure], 'g-', label=measure + ' in the whole world', linewidth=3)
+    lns1 = ax.plot(data_share["Close"], 'r.-', markersize=25, label=long_name, linewidth=8)
     plt.xticks(rotation=30, )
     ax2.xaxis.label.set_color('white')
     ax2.yaxis.label.set_color('white')
     ax2.tick_params(colors='white')
-    plt.legend()
+    lns = lns1 + lns2
+    labs = [l.get_label() for l in lns]
+    ax.legend(lns, labs, loc=0)
     fig.savefig('static/images/covid5.png', dpi=300, bbox_inches='tight', transparent=True)
     fig.clf()
 
@@ -176,15 +178,17 @@ def draw_covid_currency(country1, country2, measure, time):
     ax.set_xlim([time_prior, datetime.now()])
     if currency is not None:
         ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-        ax.plot(data1[measure], 'r.-', markersize=25, label=country1, linewidth=3)
-        ax.plot(data2[measure], 'y.-', markersize=25, label=country2, linewidth=3)
+        lns1 = ax.plot(data1[measure], 'r.-', markersize=25, label=country1, linewidth=3)
+        lns2 = ax.plot(data2[measure], 'y.-', markersize=25, label=country2, linewidth=3)
         ax2 = ax.twinx()
-        ax2.plot(currency, 'go-', markersize=25, label=CURRENCY_CODES[country1] + ' to ' +\
+        lns3 = ax2.plot(currency, 'go-', markersize=25, label=CURRENCY_CODES[country1] + ' to ' +  \
                  CURRENCY_CODES[country2], linewidth=8)
         ax.grid()
         plt.xticks(rotation=30, )
         plt.title(measure + " and currencies " + " in " + country1 + " and " + country2, fontdict={'fontsize': 40, 'color': "white"})
-        plt.legend()
+        lns = lns1 + lns2 + lns3
+        labs = [l.get_label() for l in lns]
+        ax.legend(lns, labs, loc=0)
         ax2.xaxis.label.set_color('white')
         ax2.yaxis.label.set_color('white')
         ax2.tick_params(colors='white')
@@ -268,12 +272,12 @@ def draw_predictions_lstm_new_cases():
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='historical new cases')
-    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new cases')
+    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='Historical new cases')
+    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='Predicted new cases')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title("Prediction new cases with LSTM; mean error on train: 10%, mean error on test: 31%",
-              fontdict={'fontsize': 20, 'color': "white"})
+    plt.title("Predicting new cases with LSTM; mean error on train: 10%, mean error on test: 31%",
+              fontdict={'fontsize': 27, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -289,12 +293,12 @@ def draw_predictions_lstm_new_deaths():
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='historical new deaths')
-    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='predicted new deaths')
+    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='Historical new deaths')
+    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='Predicted new deaths')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title("Prediction new deaths with LSTM; mean error on train: 45%, mean error on test: 75%",
-              fontdict={'fontsize': 20, 'color': "white"})
+    plt.title("Predicting new deaths with LSTM; mean error on train: 45%, mean error on test: 75%",
+              fontdict={'fontsize': 27, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -327,20 +331,20 @@ def draw_xgboost_new_cases():
     new_cases_pl = new_cases_ewm(alpha=0.3, no_of_days=30)
     pred_df, error_train, error_test = new_cases_xgboost()
     title_on_xgboost_pred = ""
-    title_on_xgboost_pred += "Prediction new cases with xgboost; mean error on train "
+    title_on_xgboost_pred += "Predicting new cases with xgboost; mean error on train: "
     title_on_xgboost_pred += str(round(error_train, 2))
-    title_on_xgboost_pred += "%, mean error on test "
+    title_on_xgboost_pred += "%, mean error on test: "
     title_on_xgboost_pred += str(round(error_test, 2))
     title_on_xgboost_pred += "%"
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
     ax.plot(new_cases_pl["ewm"], 'g.-', markersize=25, linewidth=3, label='Exponential moving averages (with alpha=0.3)')
-    ax.plot(new_cases_pl["new_cases"], 'r.-', markersize=25, linewidth=3, label='New cases')
-    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Predition (xgboost model)')
+    ax.plot(new_cases_pl["new_cases"], 'r.-', markersize=25, linewidth=3, label='Historical new cases')
+    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Prediction (xgboost model)')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 20, 'color': "white"})
+    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 25, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')
@@ -355,20 +359,20 @@ def draw_xgboost_new_deaths():
     new_cases_pl = new_deaths_ewm(alpha=0.3, no_of_days=30)
     pred_df, error_train, error_test = new_deaths_xgboost()
     title_on_xgboost_pred = ""
-    title_on_xgboost_pred += "Prediction new deaths with xgboost; mean error on train "
+    title_on_xgboost_pred += "Predicting new deaths with xgboost; mean error on train: "
     title_on_xgboost_pred += str(round(error_train, 2))
-    title_on_xgboost_pred += "%, mean error on test "
+    title_on_xgboost_pred += "%, mean error on test: "
     title_on_xgboost_pred += str(round(error_test, 2))
     title_on_xgboost_pred += "%"
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
     ax.plot(new_cases_pl["ewm"], 'g.-', markersize=25, linewidth=3, label='Exponential moving averages (with alpha=0.3)')
-    ax.plot(new_cases_pl["new_deaths"], 'r.-', markersize=25, linewidth=3, label='New deaths')
-    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Predition (xgboost model)')
+    ax.plot(new_cases_pl["new_deaths"], 'r.-', markersize=25, linewidth=3, label='Historical new deaths')
+    ax.plot(pred_df["prediction"], 'y.-', markersize=25, linewidth=3, label='Prediction (xgboost model)')
     ax.grid()
     plt.xticks(rotation=30, )
-    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 20, 'color': "white"})
+    plt.title(title_on_xgboost_pred, fontdict={'fontsize': 25, 'color': "white"})
     plt.legend()
     ax.xaxis.label.set_color('white')
     ax.yaxis.label.set_color('white')

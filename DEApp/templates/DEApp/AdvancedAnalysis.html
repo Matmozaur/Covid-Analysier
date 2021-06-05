@@ -7,7 +7,7 @@
       <div class="t11">
           <select name="country" id="country" class="select">
           {% for country in countries %}
-            <option value="{{ country }}" {% if selected_country == country %} selected {%endif%}>{{ country }}</option>
+            <option class="option" value="{{ country }}" {% if selected_country == country %} selected {%endif%}>{{ country }}</option>
         {% endfor %}
               </select>
           Country
@@ -16,7 +16,7 @@
         <div class="t12">
            <select name="time" id="time" class="select">
           {% for time in times %}
-            <option value="{{ time }}" {% if selected_time == time %} selected {%endif%}>{{ time }}</option>
+            <option class="option" value="{{ time }}" {% if selected_time == time %} selected {%endif%}>{{ time }}</option>
         {% endfor %}
               </select>
             Time range

@@ -267,48 +267,6 @@ def draw_measures_advanced_analysis(country, time):
                                            'static/images/covid9.png')
 
 
-def draw_predictions_lstm_new_cases():
-    new_cases_pl, pred = prepare_lstm_pred_new_cases()
-    plt.rcParams.update({'font.size': 20})
-    fig, ax = plt.subplots(figsize=(20, 8))
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='Historical new cases')
-    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='Predicted new cases')
-    ax.grid()
-    plt.xticks(rotation=30, )
-    plt.title("Predicting new cases with LSTM; mean error on train: 10%, mean error on test: 31%",
-              fontdict={'fontsize': 27, 'color': "white"})
-    plt.legend()
-    ax.xaxis.label.set_color('white')
-    ax.yaxis.label.set_color('white')
-    ax.xaxis.label.set_fontsize(30)
-    ax.yaxis.label.set_fontsize(30)
-    ax.tick_params(colors='white')
-    fig.savefig('static/images/pred1.png', dpi=300, bbox_inches='tight', transparent=True)
-    fig.clf()
-
-
-def draw_predictions_lstm_new_deaths():
-    new_cases_pl, pred = prepare_lstm_pred_new_deaths()
-    plt.rcParams.update({'font.size': 20})
-    fig, ax = plt.subplots(figsize=(20, 8))
-    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
-    ax.plot(new_cases_pl, 'g.-', markersize=25, linewidth=3, label='Historical new deaths')
-    ax.plot(pred, 'r.-', markersize=25, linewidth=3, label='Predicted new deaths')
-    ax.grid()
-    plt.xticks(rotation=30, )
-    plt.title("Predicting new deaths with LSTM; mean error on train: 45%, mean error on test: 75%",
-              fontdict={'fontsize': 27, 'color': "white"})
-    plt.legend()
-    ax.xaxis.label.set_color('white')
-    ax.yaxis.label.set_color('white')
-    ax.xaxis.label.set_fontsize(30)
-    ax.yaxis.label.set_fontsize(30)
-    ax.tick_params(colors='white')
-    fig.savefig('static/images/pred2.png', dpi=300, bbox_inches='tight', transparent=True)
-    fig.clf()
-
-
 def new_cases_ewm(alpha=0.5, no_of_days=15):
     today = datetime.now()
     time_prior = today - timedelta(days=no_of_days)
@@ -329,13 +287,8 @@ def new_deaths_ewm(alpha=0.5, no_of_days=15):
 
 def draw_xgboost_new_cases():
     new_cases_pl = new_cases_ewm(alpha=0.3, no_of_days=30)
-    pred_df, error_train, error_test = new_cases_xgboost()
-    title_on_xgboost_pred = ""
-    title_on_xgboost_pred += "Predicting new cases with xgboost; mean error on train: "
-    title_on_xgboost_pred += str(round(error_train, 2))
-    title_on_xgboost_pred += "%, mean error on test: "
-    title_on_xgboost_pred += str(round(error_test, 2))
-    title_on_xgboost_pred += "%"
+    pred_df = new_cases_xgboost(COVID_DATA)
+    title_on_xgboost_pred = "Predicting new cases with xgboost"
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
@@ -357,13 +310,8 @@ def draw_xgboost_new_cases():
 
 def draw_xgboost_new_deaths():
     new_cases_pl = new_deaths_ewm(alpha=0.3, no_of_days=30)
-    pred_df, error_train, error_test = new_deaths_xgboost()
-    title_on_xgboost_pred = ""
-    title_on_xgboost_pred += "Predicting new deaths with xgboost; mean error on train: "
-    title_on_xgboost_pred += str(round(error_train, 2))
-    title_on_xgboost_pred += "%, mean error on test: "
-    title_on_xgboost_pred += str(round(error_test, 2))
-    title_on_xgboost_pred += "%"
+    pred_df = new_deaths_xgboost(COVID_DATA)
+    title_on_xgboost_pred = "Predicting new deaths with xgboost"
     plt.rcParams.update({'font.size': 20})
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))

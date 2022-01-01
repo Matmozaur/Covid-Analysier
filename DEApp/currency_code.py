@@ -34,7 +34,7 @@ def get_currencies_from_code(currency1, currency2, start_date, end_date):
     return result
 
 
-def get_currencies(country1, country2, start_date, end_date):
-    currency1 = CURRENCY_CODES[country1]
-    currency2 = CURRENCY_CODES[country2]
+def get_currencies(currency_codes, country1, country2, start_date, end_date):
+    currency1 = currency_codes[country1]
+    currency2 = currency_codes[country2]
     return get_currencies_from_code(currency1, currency2, start_date, end_date)

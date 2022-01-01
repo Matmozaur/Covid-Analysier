@@ -1,5 +1,6 @@
 import pandas as pd
-import yfinance as yf
+from dask.distributed import Client
+import dask.dataframe
 
 COLUMNS_COVID_USABLE = ['total_cases', 'new_cases', 'total_deaths', 'iso_code',
                         'new_deaths', 'total_cases_per_million', 'new_cases_per_million', 'total_deaths_per_million',
@@ -17,6 +18,7 @@ COVID_DATA = None
 CURRENCY_CODES = None
 SHARES = None
 SHARES_NAMES = ["Apple", "Microsoft"]
+CLIENT = None
 
 
 # Shares
@@ -33,7 +35,8 @@ def download_whole_covid_data():
     global COUNTRIES
     COUNTRIES = sorted(list(set(data['location'])))
     global COVID_DATA
-    COVID_DATA = data
+    COVID_DATA = dask.dataframe.from_pandas(data, 10)
+    # COVID_DATA = data
 
 
 # Currency
@@ -47,6 +50,10 @@ def load_currency_code():
 
 
 def download_whole_data():
+    client = Client()
+    client.cluster.scale(10)
+    global CLIENT
+    CLIENT = client
     download_whole_covid_data()
     load_currency_code()
     read_shares()

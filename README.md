@@ -1,4 +1,4 @@
-# IET_Data_Exploration
+# Covid Analysier
 Analysis of Covid and financial data
 
 To install required packages:  

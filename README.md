@@ -1,4 +1,4 @@
-# Covid Analysier
+# Covid Analyzer
 Analysis of Covid and financial data
 
 To install required packages:  
